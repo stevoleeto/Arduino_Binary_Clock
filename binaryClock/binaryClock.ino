@@ -1,7 +1,7 @@
 /********************************************************************************************
 Binary Clock
 
-This code was written for the following parts:
+This code was written for the following pieces of hardware:
    Arduino UNO
    Adafruit 8x8 LED matrix
    DS3231
@@ -14,7 +14,7 @@ Written by Stephen Gilardi, 2015
 /*
 * Includes necessary Libraries
 *
-* Note: Adafruit GFX and LEDBackpack libraries can be found at Adafruit.com
+* Note: Adafruit GFX and LEDBackpack libraries can be downloaded at Adafruit.com
 */
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -32,7 +32,7 @@ Written by Stephen Gilardi, 2015
 /*
 * Defines specific columns to be used on the LED Matrix
 *
-* When displaying BCD Time:
+* When displaying BCD or Binary Time:
 *    Hour Bits:   Columns 0 & 1
 *    Minute BIts: Columns 3 & 4
 *    Second Bits: Columns 6 & 7
@@ -42,12 +42,12 @@ Written by Stephen Gilardi, 2015
 *    Minute Bits: Column 3
 *    Second Bits: Column 6
 */
-#define BCDhourColA 0
-#define BCDhourColB 1
-#define BCDminuteColA 3
-#define BCDminuteColB 4
-#define BCDsecondColA 6
-#define BCDsecondColB 7
+#define hourColA 0
+#define hourColB 1
+#define minuteColA 3
+#define minuteColB 4
+#define secondColA 6
+#define secondColB 7
 
 /*
 * Defines the two buttons 
@@ -93,11 +93,11 @@ Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
 * Initalizes the four logic controlling booleans.
 * Used to switch between different modes.
 *
-* Binary Counter Time -> bcd
-* Binary Time         -> binary
-* Digital Time        -> digital
-* Party Mode          -> party
-* Sleep Mode          -> sleep
+* Binary Counter Time
+* Binary Time
+* Digital Time
+* Party Mode
+* Sleep Mode
 */
 volatile boolean bcd = false;
 volatile boolean binary = false;
@@ -109,13 +109,13 @@ volatile boolean sleep = false;
 * Initalizes the seven integer values representing the current time and date.
 * Used to switch between different modes.
 *
-* Second -> currSecond
-* Minute         -> currMinute
-* Hour        -> currHour
-* Day of the Week -> currDayOfWeek
-* Day of the Month -> currDayOfMonth
-* Month -> currMonth
-* Year -> currYear
+* Second
+* Minute
+* Hour
+* Day of the Week
+* Day of the Month
+* Month
+* Year
 */
 int currSecond = 99;
 int currMinute = 99;
@@ -126,18 +126,33 @@ int currMonth = 99;
 int currYear = 99;
    
 ////////////////////////////////////////////////////////////////////////////////
-//////////////////////// Set up Functions //////////////////////////////////////
+//////////////////////// Set up ////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-   
+
+/*
+* Function: Start Up
+* Type: Set up 
+*
+* Purpose: 
+*         - Calls four visual functions to be performed during inital setup.
+*/
 void startup(){
   upDown();
   upDown();
-  writeName();
+  writeWelcome();
   smile(); 
 }
 
-void writeName(){
+/*
+* Function: Write Welcome
+* Type: Set up 
+*
+* Purpose: 
+*         - Displays a welcome messge, "Hi Stephen", across the LED matrix.
+*         - Blinks the three LEDs blue in same direction as text.
+*/
+void writeWelcome(){
   boolean blueOn1, blueOn2 = false;
   boolean blueOn3 = true;
   for(int8_t x = 10; x>=-59; x--){
@@ -176,6 +191,14 @@ void writeName(){
   digitalWrite(blue3, LOW);
 }
 
+/*
+* Function: Up Down
+* Type: Set up 
+*
+* Purpose: 
+*         - Rolls a wall up and down the LED matrix.
+*         - Dims the three LEDs blue as wall moves up and down the matrix.
+*/
 void upDown(){
   matrix.clear();
   for(int row = 7; row > -1; row--){
@@ -200,6 +223,14 @@ void upDown(){
   digitalWrite(blue3, LOW);
 }
 
+/*
+* Function: Smile
+* Type: Set up 
+*
+* Purpose: 
+*         - Displays a smiley face on the LED matrix.
+*         - Turns on three LEDs to be green during the duration of the smiley face.
+*/
 void smile(){
   static const uint8_t PROGMEM
   smileMap[] =
@@ -228,7 +259,21 @@ void smile(){
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-
+/*
+* Function: Setup
+* Type: Arduino Functions
+*
+* Purpose: 
+*         - Mandatory Arduino Function required to perform initial setup.
+*         - Attaches necessary interrupts for Switch and Power Buttons.
+*         - Begins Serial Communications and prints initial program information.
+*         - Begins the Wire Library and connects the LED Matrix to it.
+*         - Initalizes the LED Matrix to the appropiate settings.
+*         - Initalizes the 9 digital pins for the 3 RBG LEDs to be outputs.
+*         - Calls the Startup Function.
+*         - Clears the LED Matrix.
+*         - Initalizes BCD to be the default time mode.
+*/
 void setup() {
   
   attachInterrupt(0, switchMode, RISING);
@@ -256,12 +301,32 @@ void setup() {
   
   //seconds, minutes, hours, day, date, month, year
   //setDS3231time(00,41,20,3,21,7,15);
+
   startup();
   matrix.clear();
   bcd = true;
   
 }
 
+/*
+* Function: Loop
+* Type: Arduino Functions
+*
+* Purpose: 
+*         - Mandatory Arduino Function required to perform continuous use.
+*         - Checks to see if sleep mode has been activiated:
+*             - If TRUE, clears the display and waits until sleep mode has been deactivated.
+*             - If FALSE, calls the Update Time Function and checks for other modes.
+*         - Checks to see if bcd mode has been activiated:
+*             - If TRUE, turns on only the first LED on to blue (dim) and calls the Display BCD Time Function.
+*         - Checks to see if binary mode has been activiated:
+*             - If TRUE, turns on only the second LED on to blue (dim) and calls the Display Binary Time Function.
+*         - Checks to see if digital mode has been activiated:
+*             - If TRUE, turns on only the third LED on to blue (dim) and calls the Display Digital Time Function.
+*         - Checks to see if party mode has been activiated:
+*             - If TRUE, calls the Display Party Function
+*         - Delays program 1/4 of a second to prevent overloading.
+*/
 void loop() {
   if(sleep){
     matrix.clear();
@@ -299,10 +364,26 @@ void loop() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////// Watch Face Functions //////////////////////////////
+//////////////////////////////// Interrupt Functions ///////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+/*
+* Function: Switch Mode
+* Type: Interrupt Functions
+*
+* Purpose: 
+*         - Called when the Switch Mode button has been pressed, used to switch between modes.
+*         - Serial Prints "Mode Switched!" 
+*         - Checks to see if bcd mode is currently activiated:
+*             - If TRUE, deactivates bcd mode, activates binary mode, and Serial Prints "Binary Mode!".
+*         - Checks to see if binary mode is currently activiated:
+*             - If TRUE, deactivates binary mode, activates digital mode, and Serial Prints "Digital Mode!".
+*         - Checks to see if digital mode is currently activiated:
+*             - If TRUE, deactivates digital mode, activates party mode, and Serial Prints "Party Mode!".
+*         - Checks to see if party mode is currently activiated:
+*             - If TRUE, deactivates party mode, activates bcd mode and Serial Prints "BCD Mode!".
+*/
 void switchMode(){
  Serial.println("Mode Switched!"); 
  if(bcd){
@@ -327,34 +408,48 @@ void switchMode(){
  }
 }
 
+/*
+* Function: Power Mode
+* Type: Interrupt Functions
+*
+* Purpose: 
+*         - Called when the Power Mode button has been pressed, used to switch between power modes (On / Off).
+*         - Serial Prints "Power Mode!".
+*         - Flips the current state of the Sleep Mode (used to flip between On and Off).
+*/
 void powerMode(){
   Serial.println("Power Mode!");
   sleep = !sleep;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////// Watch Face Functions //////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 void displayBCDTime(){
  //Displays the second columns
- turnColumnBinary(BCDsecondColB, currSecond % 10);
- turnColumnBinary(BCDsecondColA, currSecond / 10);
+ turnColumnBinary(secondColB, currSecond % 10);
+ turnColumnBinary(secondColA, currSecond / 10);
 
  //Displays the minute columns
- turnColumnBinary(BCDminuteColB, currMinute % 10);
- turnColumnBinary(BCDminuteColA, currMinute / 10);
+ turnColumnBinary(minuteColB, currMinute % 10);
+ turnColumnBinary(minuteColA, currMinute / 10);
  
  //Displays the hour columns
- turnColumnBinary(BCDhourColB, currHour % 10);
- turnColumnBinary(BCDhourColA, currHour / 10);
+ turnColumnBinary(hourColB, currHour % 10);
+ turnColumnBinary(hourColA, currHour / 10);
  
  matrix.writeDisplay();
 }
 
 void displayBinaryTime(){
- clearColumn(BCDsecondColB);
- clearColumn(BCDminuteColB);
- clearColumn(BCDhourColB);
- turnColumnBinary(BCDsecondColA, currSecond);
- turnColumnBinary(BCDminuteColA, currMinute);
- turnColumnBinary(BCDhourColA, currHour); 
+ clearColumn(secondColB);
+ clearColumn(minuteColB);
+ clearColumn(hourColB);
+ turnColumnBinary(secondColA, currSecond);
+ turnColumnBinary(minuteColA, currMinute);
+ turnColumnBinary(hourColA, currHour); 
  matrix.writeDisplay();
 }
 
@@ -382,7 +477,7 @@ void displayparty(){
   matrix.clear();
   matrix.writeDisplay();
   
-  while(party){
+  while(party & !sleep){
      blueOn1 = random(0, 2);
      blueOn2 = random(0, 2);
      blueOn3 = random(0, 2);
