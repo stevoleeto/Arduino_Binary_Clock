@@ -1,3 +1,5 @@
+
+
 /********************************************************************************************
 Binary Clock
 
@@ -17,8 +19,10 @@ Written by Stephen Gilardi, 2015
 * Note: Adafruit GFX and LEDBackpack libraries can be downloaded at Adafruit.com
 */
 #include <Wire.h>
+#include <BinaryClockDisplay.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_LEDBackpack.h>
+#include <BinaryClockDisplay.h>
 
 /*
 * Defines the addresses for the D23231 and Adafruit 8x8 matrix
@@ -27,27 +31,6 @@ Written by Stephen Gilardi, 2015
 * Adafruit 8x8 Matrix Address -> 0x70
 */
 #define DS3231_I2C_ADDRESS 0x68
-#define Adafruit_8x8matrix_ADDRESS 0x70
-
-/*
-* Defines specific columns to be used on the LED Matrix
-*
-* When displaying BCD or Binary Time:
-*    Hour Bits:   Columns 0 & 1
-*    Minute BIts: Columns 3 & 4
-*    Second Bits: Columns 6 & 7
-*
-* When displaying Binary Time:
-*    Hour Bits:   Column 0
-*    Minute Bits: Column 3
-*    Second Bits: Column 6
-*/
-#define hourColA 0
-#define hourColB 1
-#define minuteColA 3
-#define minuteColB 4
-#define secondColA 6
-#define secondColB 7
 
 /*
 * Defines the two buttons 
@@ -86,9 +69,6 @@ Written by Stephen Gilardi, 2015
 #define green3 6
 #define blue3 5
 
-//Declare a new Adafruit_8x8matrix object called -> matrix
-Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
-
 /*
 * Initalizes the four logic controlling booleans.
 * Used to switch between different modes.
@@ -99,11 +79,11 @@ Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
 * Party Mode
 * Sleep Mode
 */
-volatile boolean bcd = false;
-volatile boolean binary = false;
-volatile boolean digital = false;
-volatile boolean party = false;
-volatile boolean sleep = false;
+boolean bcd = false;
+boolean binary = false;
+boolean digital = false;
+boolean party = false;
+boolean sleep = false;
 
 /*
 * Initalizes the seven integer values representing the current time and date.
@@ -124,140 +104,20 @@ int currDayOfWeek = 99;
 int currDayOfMonth = 99;
 int currMonth = 99;
 int currYear = 99;
+
+
    
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////// Set up ////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-/*
-* Function: Start Up
-* Type: Set up 
-*
-* Purpose: 
-*         - Calls four visual functions to be performed during inital setup.
-*/
-void startup(){
-  upDown();
-  upDown();
-  writeWelcome();
-  smile(); 
-}
-
-/*
-* Function: Write Welcome
-* Type: Set up 
-*
-* Purpose: 
-*         - Displays a welcome messge, "Hi Stephen", across the LED matrix.
-*         - Blinks the three LEDs blue in same direction as text.
-*/
-void writeWelcome(){
-  boolean blueOn1, blueOn2 = false;
-  boolean blueOn3 = true;
-  for(int8_t x = 10; x>=-59; x--){
-    if(blueOn3){
-      digitalWrite(blue3, HIGH);
-      digitalWrite(blue1, LOW);
-    }
-    if(blueOn2){
-      digitalWrite(blue2, HIGH);
-      digitalWrite(blue3, LOW);
-    }
-    if(blueOn1){
-      digitalWrite(blue1, HIGH);
-      digitalWrite(blue2, LOW);
-    }
-    matrix.clear();
-    matrix.setCursor(x, 0);
-    matrix.print("Hi Stephen");
-    matrix.writeDisplay();
-    delay(100);
-    if(blueOn3){
-      blueOn3 = false;
-      blueOn2 = true;
-    }
-    else if(blueOn2){
-      blueOn2 = false;
-      blueOn1 = true;
-    }
-    else if(blueOn1){
-      blueOn1 = false;
-      blueOn3 = true;
-    }
-  }
-  digitalWrite(blue1, LOW);
-  digitalWrite(blue2, LOW);
-  digitalWrite(blue3, LOW);
-}
-
-/*
-* Function: Up Down
-* Type: Set up 
-*
-* Purpose: 
-*         - Rolls a wall up and down the LED matrix.
-*         - Dims the three LEDs blue as wall moves up and down the matrix.
-*/
-void upDown(){
-  matrix.clear();
-  for(int row = 7; row > -1; row--){
-    analogWrite(blue1, 200 - (row*25));
-    analogWrite(blue2, 200 - (row*25));
-    analogWrite(blue3, 200 - (row*25));
-    matrix.drawLine(0, row, 7, row, LED_ON);
-    matrix.writeDisplay();
-    delay(100);
-  }
-  for(int row = 0; row < 8; row++){
-    analogWrite(blue1, 200 - (row*25));
-    analogWrite(blue2, 200 - (row*25));
-    analogWrite(blue3, 200 - (row*25));
-    matrix.drawLine(0,  row, 7, row, LED_OFF);
-    matrix.writeDisplay();
-    delay(100); 
-  }
-  
-  digitalWrite(blue1, LOW);
-  digitalWrite(blue2, LOW);
-  digitalWrite(blue3, LOW);
-}
-
-/*
-* Function: Smile
-* Type: Set up 
-*
-* Purpose: 
-*         - Displays a smiley face on the LED matrix.
-*         - Turns on three LEDs to be green during the duration of the smiley face.
-*/
-void smile(){
-  static const uint8_t PROGMEM
-  smileMap[] =
-  { B00111100,
-    B01000010,
-    B10100101,
-    B10000001,
-    B10100101,
-    B10011001,
-    B01000010,
-    B00111100 };
-  matrix.clear();
-  matrix.drawBitmap(0, 0, smileMap, 8, 8, LED_ON);
-  matrix.writeDisplay();
-  digitalWrite(green1, HIGH);
-  digitalWrite(green2, HIGH);
-  digitalWrite(green3, HIGH);
-  delay(1000);
-  digitalWrite(green1, LOW);
-  digitalWrite(green2, LOW);
-  digitalWrite(green3, LOW);
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// Arduino Functions ///////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+BinaryClockDisplay display;
 
 /*
 * Function: Setup
@@ -280,30 +140,14 @@ void setup() {
   attachInterrupt(1, powerMode, RISING);
   Serial.begin(9600);
   Serial.println("Matrix Test\nStephen Gilardi\n7/13/2015");
-  Serial.println("Setup()");
-  
+  Serial.println("Setup()");  
+
   Wire.begin();
-  matrix.begin(Adafruit_8x8matrix_ADDRESS); //the I2C address for the matrix is 0x70
-  matrix.setTextSize(1);
-  matrix.setTextWrap(false);
-  matrix.setTextColor(LED_ON);
-  matrix.setRotation(3);
-  
-  pinMode(red1, OUTPUT);
-  pinMode(green1, OUTPUT);
-  pinMode(blue1, OUTPUT);
-  pinMode(red2, OUTPUT);
-  pinMode(green2, OUTPUT);
-  pinMode(blue2, OUTPUT);
-  pinMode(red3, OUTPUT);
-  pinMode(green3, OUTPUT);
-  pinMode(blue3, OUTPUT);
-  
+  display.setup(blue1, green1, red1, blue2, green2, red2, blue3, green3, red3, &sleep, &digital, &party);
+
   //seconds, minutes, hours, day, date, month, year
   //setDS3231time(00,41,20,3,21,7,15);
-
-  startup();
-  matrix.clear();
+  //display.playStartUp();
   bcd = true;
   
 }
@@ -329,35 +173,27 @@ void setup() {
 */
 void loop() {
   if(sleep){
-    matrix.clear();
-    matrix.writeDisplay();
-    while(sleep){} 
+    display.sleep();
   }
   else{
     updateTime();
     if(bcd){
-      analogWrite(blue1, 25);
-      digitalWrite(blue2, LOW);
-      digitalWrite(blue3, LOW);
-      displayBCDTime(); 
+      display.showLEDBCD();
+      display.BCDTime(currHour, currMinute, currSecond); 
     }
     
     else if(binary){
-      analogWrite(blue2, 25);
-      digitalWrite(blue1, LOW);
-      digitalWrite(blue3, LOW);
-      displayBinaryTime();
+      display.showLEDBinary();
+      display.binaryTime(currHour, currMinute, currSecond);
     }
     
     else if(digital){
-      analogWrite(blue3, 25);
-      digitalWrite(blue2, LOW);
-      digitalWrite(blue1, LOW);
-      displayDigitalTime();
+      display.showLEDDigital();
+      display.digitalTime(currHour, currMinute, currSecond);
     }
     
     else if(party){
-      displayparty(); 
+      display.party(); 
     }
     delay(250);
   }
@@ -420,124 +256,6 @@ void switchMode(){
 void powerMode(){
   Serial.println("Power Mode!");
   sleep = !sleep;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////// Watch Face Functions //////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-void displayBCDTime(){
- //Displays the second columns
- turnColumnBinary(secondColB, currSecond % 10);
- turnColumnBinary(secondColA, currSecond / 10);
-
- //Displays the minute columns
- turnColumnBinary(minuteColB, currMinute % 10);
- turnColumnBinary(minuteColA, currMinute / 10);
- 
- //Displays the hour columns
- turnColumnBinary(hourColB, currHour % 10);
- turnColumnBinary(hourColA, currHour / 10);
- 
- matrix.writeDisplay();
-}
-
-void displayBinaryTime(){
- clearColumn(secondColB);
- clearColumn(minuteColB);
- clearColumn(hourColB);
- turnColumnBinary(secondColA, currSecond);
- turnColumnBinary(minuteColA, currMinute);
- turnColumnBinary(hourColA, currHour); 
- matrix.writeDisplay();
-}
-
-void displayDigitalTime(){
- for(int8_t x = 10; x>=-59; x--){
-    if(!digital | sleep){
-      matrix.clear();
-      break; 
-    }
-    matrix.clear();
-    matrix.setCursor(x, 0);
-    matrix.print(currHour);
-    matrix.print(":");
-    matrix.print(currMinute);
-    matrix.print(":");
-    matrix.print(currSecond);
-    matrix.writeDisplay(); 
-    delay(100);
-  } 
-}
-
-void displayparty(){
-  int blueOn1, blueOn2, blueOn3, redOn1, redOn2, redOn3, greenOn1, greenOn2, greenOn3 = 0;
-  smile();
-  matrix.clear();
-  matrix.writeDisplay();
-  
-  while(party & !sleep){
-     blueOn1 = random(0, 2);
-     blueOn2 = random(0, 2);
-     blueOn3 = random(0, 2);
-     greenOn1 = random(0, 2);
-     greenOn2 = random(0, 2);
-     greenOn3 = random(0, 2);
-     redOn1 = random(0, 2);
-     redOn2 = random(0, 2);
-     redOn3 = random(0, 2);
-     digitalWrite(blue1, blueOn1);
-     digitalWrite(green1, greenOn1);
-     digitalWrite(red1, redOn1);
-     digitalWrite(blue2, blueOn2);
-     digitalWrite(green2, greenOn2);
-     digitalWrite(red2, redOn2);
-     digitalWrite(blue3, blueOn3);
-     digitalWrite(green3, greenOn3);
-     digitalWrite(red3, redOn3);
-     matrix.drawPixel(random(0, 8), random(0, 8), LED_ON);
-     matrix.drawPixel(random(0, 8), random(0, 8), LED_ON);
-     matrix.drawPixel(random(0, 8), random(0, 8), LED_OFF);
-     matrix.drawPixel(random(0, 8), random(0, 8), LED_OFF);
-     matrix.drawPixel(random(0, 8), random(0, 8), LED_OFF);
-     matrix.drawPixel(random(0, 8), random(0, 8), LED_OFF);
-     matrix.setRotation(random(0, 5));
-     matrix.writeDisplay();
-     delay(500);
-  }
-  digitalWrite(blue1, LOW);
-  digitalWrite(green1, LOW);
-  digitalWrite(red1, LOW);
-  digitalWrite(blue2, LOW);
-  digitalWrite(green2, LOW);
-  digitalWrite(red2, LOW);
-  digitalWrite(blue3, LOW);
-  digitalWrite(green3, LOW);
-  digitalWrite(red3, LOW);
-  matrix.setRotation(3);
-  matrix.clear();
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////// Matrix Functions //////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-void turnColumnBinary(int columnToChange, int numToConvertToBinary){
-  clearColumn(columnToChange);
-  for(int ledHorz = 7; ledHorz > -1; ledHorz--){
-     if(numToConvertToBinary % 2 == 1){
-       matrix.drawPixel(columnToChange, ledHorz, LED_ON);
-     } 
-     numToConvertToBinary = numToConvertToBinary / 2;
-  }
-}
-
-void clearColumn(int column){
- for(int i = 0; i < 8; i++){
-    matrix.drawPixel(column, i, LED_OFF);
- }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
