@@ -18,7 +18,7 @@ Watch the youtube demo video [here](www.youtube.com)
 
 ##### This code was written for the following pieces of hardware:
   * Arduino UNO
-  * Adafruit 8x8 LED matrix
+  * Adafruit 8x8 LED matrix (Additional Libraries needed, found at Adafruit.com)
   * DS3231
   * RGB LED x 3
   * Tactile Button x 2
