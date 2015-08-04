@@ -14,7 +14,7 @@ BitClock is a simple clock which features three time modes to display the curren
 * A button to turn the device on and off.
 
 #### DEMO
-Watch the youtube demo video [here](www.youtube.com)
+Watch the youtube demo video [here](http://www.youtube.com/watch?v=_swiyXcUvNY)
 
 ##### This code was written for the following pieces of hardware:
   * Arduino UNO
