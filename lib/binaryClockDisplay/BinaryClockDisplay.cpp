@@ -1,8 +1,7 @@
 /*
-* BinaryClockDisplay.h - Library for accessing the 8x8 LED Matrix and the three RBG LEDs
-* Created by Stephen Gilardi, July 24, 2015
+* BinaryClockDisplay.cpp - Library for accessing the 8x8 LED Matrix and the three rgb LEDs
+* Created by Stephen Gilardi, 2015
 */
-#include "Arduino.h"
 #include <Adafruit_GFX.h>
 #include <Adafruit_LEDBackpack.h>
 #include "BinaryClockDisplay.h"
@@ -37,13 +36,11 @@
 //Declare a new Adafruit_8x8matrix object called -> matrix
 Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
 
-/*
-* Function: Binary Clock Display Constructor 
-*
-* Purpose: 
-*         - Initalizes an Object to be used to access the Binary Clock Display
-*/
-BinaryClockDisplay::BinaryClockDisplay(int LED1Blue, int LED1Green, int LED1Red, int LED2Blue, int LED2Green, int LED2Red, int LED3Blue, int LED3Green, int LED3Red){
+boolean *sleepCopy;
+boolean *digitalCopy;
+boolean *partyCopy;
+
+void BinaryClockDisplay::setup(int LED1Blue, int LED1Green, int LED1Red, int LED2Blue, int LED2Green, int LED2Red, int LED3Blue, int LED3Green, int LED3Red, boolean *sleepPointer, boolean *digitalPointer, boolean *partyPointer){
 	rgbLEDs[0][0] = LED1Blue;
 	rgbLEDs[0][1] = LED1Green;
 	rgbLEDs[0][2] = LED1Red;
@@ -59,6 +56,10 @@ BinaryClockDisplay::BinaryClockDisplay(int LED1Blue, int LED1Green, int LED1Red,
 			pinMode(rgbLEDs[indexLED][indexColor], OUTPUT);
 		}
 	}
+
+	sleepCopy = sleepPointer;
+	digitalCopy = digitalPointer;
+	partyCopy = partyPointer;
 
 	matrix.begin(Adafruit_8x8matrix_ADDRESS); //the I2C address for the matrix is 0x70
 	matrix.setTextSize(1);
@@ -206,44 +207,44 @@ void BinaryClockDisplay::clearColumn(int columnToRemove){
 
 /*
 * Function: showLEDBCD
-* Type: RBG LEDs Modification 
+* Type: rgb LEDs Modification 
 *
 * Purpose: 
-*         - Turns on the first RBG LED to blue, signaling BCD mode.
-*		  - Turns off the remaining blue RBG LEDs.
+*         - Turns on the first rgb LED to blue, signaling BCD mode.
+*		  - Turns off the remaining blue rgb LEDs.
 */
 void BinaryClockDisplay::showLEDBCD(){
-	analogWrite(rbgLEDs[0][blue], 25);
-    digitalWrite(rbgLEDs[1][blue], LOW);
-    digitalWrite(rbgLEDs[2][blue], LOW);
+	analogWrite(rgbLEDs[0][blue], 25);
+    digitalWrite(rgbLEDs[1][blue], LOW);
+    digitalWrite(rgbLEDs[2][blue], LOW);
 }
 
 /*
 * Function: showLEDBinary
-* Type: RBG LEDs Modification 
+* Type: rgb LEDs Modification 
 *
 * Purpose: 
-*         - Turns on the second RBG LED to blue, signaling Binary mode.
-*		  - Turns off the remaining blue RBG LEDs.
+*         - Turns on the second rgb LED to blue, signaling Binary mode.
+*		  - Turns off the remaining blue rgb LEDs.
 */
 void BinaryClockDisplay::showLEDBinary(){
-	analogWrite(rbgLEDs[1][blue], 25);
-    digitalWrite(rbgLEDs[0][blue], LOW);
-    digitalWrite(rbgLEDs[2][blue], LOW);
+	analogWrite(rgbLEDs[1][blue], 25);
+    digitalWrite(rgbLEDs[0][blue], LOW);
+    digitalWrite(rgbLEDs[2][blue], LOW);
 }
 
 /*
 * Function: showLEDDigital
-* Type: RBG LEDs Modification 
+* Type: rgb LEDs Modification 
 *
 * Purpose: 
-*         - Turns on the third RBG LED to blue, signaling Digital mode.
-*		  - Turns off the remaining blue RBG LEDs.
+*         - Turns on the third rgb LED to blue, signaling Digital mode.
+*		  - Turns off the remaining blue rgb LEDs.
 */
 void BinaryClockDisplay::showLEDDigital(){
-	analogWrite(rbgLEDs[2][blue], 25);
-    digitalWrite(rbgLEDs[1][blue], LOW);
-    digitalWrite(rbgLEDs[0][blue], LOW);
+	analogWrite(rgbLEDs[2][blue], 25);
+    digitalWrite(rgbLEDs[1][blue], LOW);
+    digitalWrite(rgbLEDs[0][blue], LOW);
 }
 
 /*
@@ -272,8 +273,8 @@ void BinaryClockDisplay::turnColumnBinary(int columnToChange, int numToConvertTo
 *         - Takes in three integer values to represent an hour, minute, and second.
 *		  - Uses the turnColumnBinary() function to display the time in BCD format.
 */
-void BinaryClockDisplay::displayBCDTime(int theCurrentHour, int theCurrentMinute, int theCurrentSecond){
-	//Displays BCD mode using the RBG LEDs
+void BinaryClockDisplay::BCDTime(int theCurrentHour, int theCurrentMinute, int theCurrentSecond){
+	//Displays BCD mode using the rgb LEDs
 	showLEDBCD();
 
 	//Displays the second columns
@@ -300,8 +301,8 @@ void BinaryClockDisplay::displayBCDTime(int theCurrentHour, int theCurrentMinute
 *		  - Uses the turnColumnBinary() function to display the time in binary format.
 *		  - Uses the clearColumn() function to confirm that the extra columns are turned off.
 */
-void BinaryClockDisplay::displayBinaryTime(int theCurrentHour, int theCurrentMinute, int theCurrentSecond){
-	//Displays Binary mode using the RBG LEDs
+void BinaryClockDisplay::binaryTime(int theCurrentHour, int theCurrentMinute, int theCurrentSecond){
+	//Displays Binary mode using the rgb LEDs
 	showLEDBinary();
 
 	//clears the columns not used
@@ -325,12 +326,9 @@ void BinaryClockDisplay::displayBinaryTime(int theCurrentHour, int theCurrentMin
 *		  - Moves the text along the screen so that the full time can be viewed.
 *		  - Continually monitors digital mode boolean and sleep mode booleans to be able to quit abrutly.
 */
-void BinaryClockDisplay::displayDigitalTime(int theCurrentHour, int theCurrentMinute, int theCurrentSecond){
-	//Displays Digital mode using the RBG LEDs
-	showLEDDigital();
-	
+void BinaryClockDisplay::digitalTime(int theCurrentHour, int theCurrentMinute, int theCurrentSecond){
 	for(int8_t x = 10; x>=-59; x--){
-    if(!digital | sleep){ //TODO - Make this work via new library
+    if(!digitalCopy || sleepCopy){
       matrix.clear();
       break; 
     }
@@ -351,12 +349,12 @@ void BinaryClockDisplay::displayDigitalTime(int theCurrentHour, int theCurrentMi
 * Type: LED Matrix Mode
 *
 * Purpose: 
-*		  - Randomly turns the RBG LEDs on and off
+*		  - Randomly turns the rgb LEDs on and off
 *		  - Chooses random pixels in the LED matrix to turn off and on.
 *		  - Monitors the party boolean and sleep boolean values to contiune operating until quit.
 *		  - When disabled, returns LED matrix and RGB LEDs to their default values.
 */
-void BinaryClockDisplay::displayparty(){
+void BinaryClockDisplay::party(){
 	int blueOn1, blueOn2, blueOn3, redOn1, redOn2, redOn3, greenOn1, greenOn2, greenOn3 = 0;
 	
 	smile();
@@ -364,7 +362,7 @@ void BinaryClockDisplay::displayparty(){
 	matrix.clear();
 	matrix.writeDisplay();
 
-	while(party & !sleep){ //TODO: Get this to work via new library
+	while(partyCopy && !sleepCopy){ //TODO: Get this to work via new library
 		blueOn1 = random(0, 2);
 		blueOn2 = random(0, 2);
 		blueOn3 = random(0, 2);
@@ -374,15 +372,15 @@ void BinaryClockDisplay::displayparty(){
 		redOn1 = random(0, 2);
 		redOn2 = random(0, 2);
 		redOn3 = random(0, 2);
-		digitalWrite(rbgLEDs[0][blue], blueOn1);
-		digitalWrite(rbgLEDs[0][green], greenOn1);
-		digitalWrite(rbgLEDs[0][red], redOn1);
-		digitalWrite(rbgLEDs[1][blue], blueOn2);
-		digitalWrite(rbgLEDs[1][green], greenOn2);
-		digitalWrite(rbgLEDs[1][red], redOn2);
-		digitalWrite(rbgLEDs[2][blue], blueOn3);
-		digitalWrite(rbgLEDs[2][green], greenOn3);
-		digitalWrite(rbgLEDs[2][red], redOn3);
+		digitalWrite(rgbLEDs[0][blue], blueOn1);
+		digitalWrite(rgbLEDs[0][green], greenOn1);
+		digitalWrite(rgbLEDs[0][red], redOn1);
+		digitalWrite(rgbLEDs[1][blue], blueOn2);
+		digitalWrite(rgbLEDs[1][green], greenOn2);
+		digitalWrite(rgbLEDs[1][red], redOn2);
+		digitalWrite(rgbLEDs[2][blue], blueOn3);
+		digitalWrite(rgbLEDs[2][green], greenOn3);
+		digitalWrite(rgbLEDs[2][red], redOn3);
 		matrix.drawPixel(random(0, 8), random(0, 8), LED_ON);
 		matrix.drawPixel(random(0, 8), random(0, 8), LED_ON);
 		matrix.drawPixel(random(0, 8), random(0, 8), LED_OFF);
@@ -393,15 +391,32 @@ void BinaryClockDisplay::displayparty(){
 		matrix.writeDisplay();
 		delay(500);
 	}
-	digitalWrite(rbgLEDs[0][blue], LOW);
-	digitalWrite(rbgLEDs[0][green], LOW);
-	digitalWrite(rbgLEDs[0][red], LOW);
-	digitalWrite(rbgLEDs[1][blue], LOW);
-	digitalWrite(rbgLEDs[1][green], LOW);
-	digitalWrite(rbgLEDs[1][red], LOW);
-	digitalWrite(rbgLEDs[2][blue], LOW);
-	digitalWrite(rbgLEDs[2][green], LOW);
-	digitalWrite(rbgLEDs[2][red], LOW);
+	digitalWrite(rgbLEDs[0][blue], LOW);
+	digitalWrite(rgbLEDs[0][green], LOW);
+	digitalWrite(rgbLEDs[0][red], LOW);
+	digitalWrite(rgbLEDs[1][blue], LOW);
+	digitalWrite(rgbLEDs[1][green], LOW);
+	digitalWrite(rgbLEDs[1][red], LOW);
+	digitalWrite(rgbLEDs[2][blue], LOW);
+	digitalWrite(rgbLEDs[2][green], LOW);
+	digitalWrite(rgbLEDs[2][red], LOW);
 	matrix.setRotation(3);
 	matrix.clear();
+}
+
+void BinaryClockDisplay::sleep(){
+	matrix.clear();
+	matrix.writeDisplay();
+
+	digitalWrite(rgbLEDs[0][blue], LOW);
+	digitalWrite(rgbLEDs[0][green], LOW);
+	digitalWrite(rgbLEDs[0][red], LOW);
+	digitalWrite(rgbLEDs[1][blue], LOW);
+	digitalWrite(rgbLEDs[1][green], LOW);
+	digitalWrite(rgbLEDs[1][red], LOW);
+	digitalWrite(rgbLEDs[2][blue], LOW);
+	digitalWrite(rgbLEDs[2][green], LOW);
+	digitalWrite(rgbLEDs[2][red], LOW);
+
+	while(sleepCopy){}
 }

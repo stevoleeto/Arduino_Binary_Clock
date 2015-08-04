@@ -1,5 +1,3 @@
-
-
 /********************************************************************************************
 Binary Clock
 
@@ -20,17 +18,9 @@ Written by Stephen Gilardi, 2015
 */
 #include <Wire.h>
 #include <BinaryClockDisplay.h>
+#include <BinaryClockTime.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_LEDBackpack.h>
-#include <BinaryClockDisplay.h>
-
-/*
-* Defines the addresses for the D23231 and Adafruit 8x8 matrix
-*
-* DS3231 Address              -> 0x68
-* Adafruit 8x8 Matrix Address -> 0x70
-*/
-#define DS3231_I2C_ADDRESS 0x68
 
 /*
 * Defines the two buttons 
@@ -85,28 +75,9 @@ boolean digital = false;
 boolean party = false;
 boolean sleep = false;
 
-/*
-* Initalizes the seven integer values representing the current time and date.
-* Used to switch between different modes.
-*
-* Second
-* Minute
-* Hour
-* Day of the Week
-* Day of the Month
-* Month
-* Year
-*/
-int currSecond = 99;
-int currMinute = 99;
-int currHour = 99;
-int currDayOfWeek = 99;
-int currDayOfMonth = 99;
-int currMonth = 99;
-int currYear = 99;
-
-//creates display object to reference to
+//creates display and time objects to reference to
 BinaryClockDisplay display;
+BinaryClockTime timeKeep;
 
 /*
 * Function: Setup
@@ -116,7 +87,7 @@ BinaryClockDisplay display;
 *         - Mandatory Arduino Function required to perform initial setup.
 *         - Attaches necessary interrupts for Switch and Power Buttons.
 *         - Begins Serial Communications and prints initial program information.
-*         - Begins the Wire Library and connects the LED Matrix to it.
+*         - Begins the Wire Library.
 *         - Initalizes the Binary Clock Display to the appropiate settings.
 *         - If uncommented, calls the set time function to initalize the time.
 *         - Calls the Display Startup function.
@@ -134,7 +105,7 @@ void setup() {
   display.setup(blue1, green1, red1, blue2, green2, red2, blue3, green3, red3, &sleep, &digital, &party);
 
   //seconds, minutes, hours, day, date, month, year
-  //setDS3231time(00,41,20,3,21,7,15);
+  //timeKeep.modifyTime(0,0,0,0,0,0,0);
   
   display.playStartUp();
   bcd = true;
@@ -166,17 +137,17 @@ void loop() {
     display.sleep();
   }
   else{
-    updateTime();
+    timeKeep.updateTime();
     if(bcd){
-      display.BCDTime(currHour, currMinute, currSecond); 
+      display.BCDTime(timeKeep.getHour(), timeKeep.getMinute(), timeKeep.getSecond()); 
     }
     
     else if(binary){
-      display.binaryTime(currHour, currMinute, currSecond);
+      display.binaryTime(timeKeep.getHour(), timeKeep.getMinute(), timeKeep.getSecond());
     }
     
     else if(digital){
-      display.digitalTime(currHour, currMinute, currSecond);
+      display.digitalTime(timeKeep.getHour(), timeKeep.getMinute(), timeKeep.getSecond());
     }
     
     else if(party){
@@ -185,11 +156,6 @@ void loop() {
     delay(250);
   }
 }
-
-////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////// Interrupt Functions ///////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
 
 /*
 * Function: Switch Mode
@@ -244,56 +210,3 @@ void powerMode(){
   Serial.println("Power Mode!");
   sleep = !sleep;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////// Additional Clock Functions ///////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-byte decToBcd(byte val)
-{
-  return( (val/10*16) + (val%10) );
-}
-// Convert binary coded decimal to normal decimal numbers
-byte bcdToDec(byte val)
-{
-  return( (val/16*10) + (val%16) );
-}
-
-void setDS3231time(byte second, byte minute, byte hour, byte dayOfWeek, byte
-dayOfMonth, byte month, byte year)
-{
-  // sets time and date data to DS3231
-  Wire.beginTransmission(DS3231_I2C_ADDRESS);
-  Wire.write(0); // set next input to start at the seconds register
-  Wire.write(decToBcd(second)); // set seconds
-  Wire.write(decToBcd(minute)); // set minutes
-  Wire.write(decToBcd(hour)); // set hours
-  Wire.write(decToBcd(dayOfWeek)); // set day of week (1=Sunday, 7=Saturday)
-  Wire.write(decToBcd(dayOfMonth)); // set date (1 to 31)
-  Wire.write(decToBcd(month)); // set month
-  Wire.write(decToBcd(year)); // set year (0 to 99)
-  Wire.endTransmission();
-}
-
-void updateTime(){
-  Wire.beginTransmission(DS3231_I2C_ADDRESS);
-  Wire.write(0); // set DS3231 register pointer to 00h
-  Wire.endTransmission();
-  Wire.requestFrom(DS3231_I2C_ADDRESS, 7);
-  // request seven bytes of data from DS3231 starting from register 00h
-  currSecond = bcdToDec(Wire.read() & 0x7f); 
-  currMinute = bcdToDec(Wire.read());
-  currHour = bcdToDec(Wire.read() & 0x3f);
-  if(currHour > 12){
-    currHour = currHour - 12;
-  }
-  currDayOfWeek = bcdToDec(Wire.read());
-  currDayOfMonth = bcdToDec(Wire.read());
-  currMonth = bcdToDec(Wire.read());
-  currYear = bcdToDec(Wire.read());
-}
-
-
-
-
