@@ -37,6 +37,12 @@
 //Declare a new Adafruit_8x8matrix object called -> matrix
 Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
 
+/*
+* Function: Binary Clock Display Constructor 
+*
+* Purpose: 
+*         - Initalizes an Object to be used to access the Binary Clock Display
+*/
 BinaryClockDisplay::BinaryClockDisplay(int LED1Blue, int LED1Green, int LED1Red, int LED2Blue, int LED2Green, int LED2Red, int LED3Blue, int LED3Green, int LED3Red){
 	rgbLEDs[0][0] = LED1Blue;
 	rgbLEDs[0][1] = LED1Green;
@@ -185,30 +191,69 @@ void BinaryClockDisplay::smile(){
 	digitalWrite(rgbLEDs[2][green], LOW);
 }
 
+/*
+* Function: Clear Column
+* Type: LED Matrix Modification 
+*
+* Purpose: 
+*         - Clears a specific column on the LED matrix, setting the LEDs off.
+*/
 void BinaryClockDisplay::clearColumn(int columnToRemove){
 	for(int i = 0; i < 8; i++){
     	matrix.drawPixel(columnToRemove, i, LED_OFF);
 	}
 }
 
+/*
+* Function: showLEDBCD
+* Type: RBG LEDs Modification 
+*
+* Purpose: 
+*         - Turns on the first RBG LED to blue, signaling BCD mode.
+*		  - Turns off the remaining blue RBG LEDs.
+*/
 void BinaryClockDisplay::showLEDBCD(){
 	analogWrite(rbgLEDs[0][blue], 25);
     digitalWrite(rbgLEDs[1][blue], LOW);
     digitalWrite(rbgLEDs[2][blue], LOW);
 }
 
+/*
+* Function: showLEDBinary
+* Type: RBG LEDs Modification 
+*
+* Purpose: 
+*         - Turns on the second RBG LED to blue, signaling Binary mode.
+*		  - Turns off the remaining blue RBG LEDs.
+*/
 void BinaryClockDisplay::showLEDBinary(){
 	analogWrite(rbgLEDs[1][blue], 25);
     digitalWrite(rbgLEDs[0][blue], LOW);
     digitalWrite(rbgLEDs[2][blue], LOW);
 }
 
+/*
+* Function: showLEDDigital
+* Type: RBG LEDs Modification 
+*
+* Purpose: 
+*         - Turns on the third RBG LED to blue, signaling Digital mode.
+*		  - Turns off the remaining blue RBG LEDs.
+*/
 void BinaryClockDisplay::showLEDDigital(){
 	analogWrite(rbgLEDs[2][blue], 25);
     digitalWrite(rbgLEDs[1][blue], LOW);
     digitalWrite(rbgLEDs[0][blue], LOW);
 }
 
+/*
+* Function: Turn Column Binary
+* Type: LED Matrix Modification 
+*
+* Purpose: 
+*         - Takes a column and an integer as parameters.
+*		  - Converts the integer value to binary, and displays it on the specific column.
+*/
 void BinaryClockDisplay::turnColumnBinary(int columnToChange, int numToConvertToBinary){
 	clearColumn(columnToChange);
 	for(int ledHorz = 7; ledHorz > -1; ledHorz--){
@@ -219,6 +264,14 @@ void BinaryClockDisplay::turnColumnBinary(int columnToChange, int numToConvertTo
 	}
 }
 
+/*
+* Function: Display BCD Time
+* Type: LED Matrix Mode
+*
+* Purpose: 
+*         - Takes in three integer values to represent an hour, minute, and second.
+*		  - Uses the turnColumnBinary() function to display the time in BCD format.
+*/
 void BinaryClockDisplay::displayBCDTime(int theCurrentHour, int theCurrentMinute, int theCurrentSecond){
 	//Displays the second columns
 	turnColumnBinary(secondColB, theCurrentSecond % 10);
@@ -235,6 +288,15 @@ void BinaryClockDisplay::displayBCDTime(int theCurrentHour, int theCurrentMinute
 	matrix.writeDisplay();
 }
 
+/*
+* Function: Display Binary Time
+* Type: LED Matrix Mode
+*
+* Purpose: 
+*         - Takes in three integer values to represent an hour, minute, and second.
+*		  - Uses the turnColumnBinary() function to display the time in binary format.
+*		  - Uses the clearColumn() function to confirm that the extra columns are turned off.
+*/
 void BinaryClockDisplay::displayBinaryTime(int theCurrentHour, int theCurrentMinute, int theCurrentSecond){
 	clearColumn(secondColB);
 	clearColumn(minuteColB);
@@ -245,6 +307,16 @@ void BinaryClockDisplay::displayBinaryTime(int theCurrentHour, int theCurrentMin
 	matrix.writeDisplay();
 }
 
+/*
+* Function: Display Digital Time
+* Type: LED Matrix Mode
+*
+* Purpose: 
+*         - Takes in three integer values to represent an hour, minute, and second.
+*		  - Prints the time as a string to the matrix
+*		  - Moves the text along the screen so that the full time can be viewed.
+*		  - Continually monitors digital mode boolean and sleep mode booleans to be able to quit abrutly.
+*/
 void BinaryClockDisplay::displayDigitalTime(int theCurrentHour, int theCurrentMinute, int theCurrentSecond){
 	for(int8_t x = 10; x>=-59; x--){
     if(!digital | sleep){ //TODO - Make this work via new library
@@ -263,6 +335,16 @@ void BinaryClockDisplay::displayDigitalTime(int theCurrentHour, int theCurrentMi
   }
 }
 
+/*
+* Function: Display Party Mode
+* Type: LED Matrix Mode
+*
+* Purpose: 
+*		  - Randomly turns the RBG LEDs on and off
+*		  - Chooses random pixels in the LED matrix to turn off and on.
+*		  - Monitors the party boolean and sleep boolean values to contiune operating until quit.
+*		  - When disabled, returns LED matrix and RGB LEDs to their default values.
+*/
 void BinaryClockDisplay::displayparty(){
 	int blueOn1, blueOn2, blueOn3, redOn1, redOn2, redOn3, greenOn1, greenOn2, greenOn3 = 0;
 	
