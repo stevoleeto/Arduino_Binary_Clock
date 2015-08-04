@@ -16,7 +16,7 @@ BitClock is a simple clock which features three time modes and an additional par
 #### DEMO
 Watch the youtube demo video [here](www.youtube.com)
 
-###### This code was written for the following pieces of hardware:
+##### This code was written for the following pieces of hardware:
   * Arduino UNO
   * Adafruit 8x8 LED matrix
   * DS3231
