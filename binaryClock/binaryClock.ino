@@ -105,33 +105,21 @@ int currDayOfMonth = 99;
 int currMonth = 99;
 int currYear = 99;
 
-
-   
-////////////////////////////////////////////////////////////////////////////////
-//////////////////////// Set up ////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////// Arduino Functions ///////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
+//creates display object to reference to
 BinaryClockDisplay display;
 
 /*
 * Function: Setup
-* Type: Arduino Functions
+* Type: Arduino Function
 *
 * Purpose: 
 *         - Mandatory Arduino Function required to perform initial setup.
 *         - Attaches necessary interrupts for Switch and Power Buttons.
 *         - Begins Serial Communications and prints initial program information.
 *         - Begins the Wire Library and connects the LED Matrix to it.
-*         - Initalizes the LED Matrix to the appropiate settings.
-*         - Initalizes the 9 digital pins for the 3 RBG LEDs to be outputs.
-*         - Calls the Startup Function.
-*         - Clears the LED Matrix.
+*         - Initalizes the Binary Clock Display to the appropiate settings.
+*         - If uncommented, calls the set time function to initalize the time.
+*         - Calls the Display Startup function.
 *         - Initalizes BCD to be the default time mode.
 */
 void setup() {
@@ -147,7 +135,8 @@ void setup() {
 
   //seconds, minutes, hours, day, date, month, year
   //setDS3231time(00,41,20,3,21,7,15);
-  //display.playStartUp();
+  
+  display.playStartUp();
   bcd = true;
   
 }
@@ -158,17 +147,18 @@ void setup() {
 *
 * Purpose: 
 *         - Mandatory Arduino Function required to perform continuous use.
+*         - Used as the primary point of logic, decides what should be displayed.
 *         - Checks to see if sleep mode has been activiated:
-*             - If TRUE, clears the display and waits until sleep mode has been deactivated.
+*             - If TRUE, calls the Display Sleep function.
 *             - If FALSE, calls the Update Time Function and checks for other modes.
 *         - Checks to see if bcd mode has been activiated:
-*             - If TRUE, turns on only the first LED on to blue (dim) and calls the Display BCD Time Function.
+*             - If TRUE, calls the Display BCD Time function.
 *         - Checks to see if binary mode has been activiated:
-*             - If TRUE, turns on only the second LED on to blue (dim) and calls the Display Binary Time Function.
+*             - If TRUE, calls the Display Binary Time function.
 *         - Checks to see if digital mode has been activiated:
-*             - If TRUE, turns on only the third LED on to blue (dim) and calls the Display Digital Time Function.
+*             - If TRUE, calls the Display Digital Time function.
 *         - Checks to see if party mode has been activiated:
-*             - If TRUE, calls the Display Party Function
+*             - If TRUE, calls the Display Party function
 *         - Delays program 1/4 of a second to prevent overloading.
 */
 void loop() {
