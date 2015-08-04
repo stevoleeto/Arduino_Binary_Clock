@@ -273,6 +273,9 @@ void BinaryClockDisplay::turnColumnBinary(int columnToChange, int numToConvertTo
 *		  - Uses the turnColumnBinary() function to display the time in BCD format.
 */
 void BinaryClockDisplay::displayBCDTime(int theCurrentHour, int theCurrentMinute, int theCurrentSecond){
+	//Displays BCD mode using the RBG LEDs
+	showLEDBCD();
+
 	//Displays the second columns
 	turnColumnBinary(secondColB, theCurrentSecond % 10);
 	turnColumnBinary(secondColA, theCurrentSecond / 10);
@@ -298,9 +301,14 @@ void BinaryClockDisplay::displayBCDTime(int theCurrentHour, int theCurrentMinute
 *		  - Uses the clearColumn() function to confirm that the extra columns are turned off.
 */
 void BinaryClockDisplay::displayBinaryTime(int theCurrentHour, int theCurrentMinute, int theCurrentSecond){
+	//Displays Binary mode using the RBG LEDs
+	showLEDBinary();
+
+	//clears the columns not used
 	clearColumn(secondColB);
 	clearColumn(minuteColB);
 	clearColumn(hourColB);
+
 	turnColumnBinary(secondColA, theCurrentSecond);
 	turnColumnBinary(minuteColA, theCurrentMinute);
 	turnColumnBinary(hourColA, theCurrentHour); 
@@ -318,6 +326,9 @@ void BinaryClockDisplay::displayBinaryTime(int theCurrentHour, int theCurrentMin
 *		  - Continually monitors digital mode boolean and sleep mode booleans to be able to quit abrutly.
 */
 void BinaryClockDisplay::displayDigitalTime(int theCurrentHour, int theCurrentMinute, int theCurrentSecond){
+	//Displays Digital mode using the RBG LEDs
+	showLEDDigital();
+	
 	for(int8_t x = 10; x>=-59; x--){
     if(!digital | sleep){ //TODO - Make this work via new library
       matrix.clear();

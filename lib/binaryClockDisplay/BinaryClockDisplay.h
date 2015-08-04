@@ -2,6 +2,7 @@
 * binaryClockDisplay.h - Library for accessing the 8x8 LED Matrix
 * Created by Stephen Gilardi, July 24, 2015
 */
+
 #ifndef BinaryClockDisplay_h
 #define BinaryClockDisplay_h
 
@@ -9,22 +10,22 @@
 
 class BinaryClockDisplay{
 	public:
-		BinaryClockDisplay(int, int, int, int, int, int, int, int, int);
+		BinaryClockDisplay(int LED1Blue, int LED1Green, int LED1Red, int LED2Blue, int LED2Green, int LED2Red, int LED3Blue, int LED3Green, int LED3Red);
 		void playStartUp();
 		void smile();
-		void clearColumn(int);
-		void showLEDBCD();
-		void showLEDBinary();
-		void showLEDDigital();
-		void displayBCDTime(int, int, int);
-		void displayBinaryTime(int, int, int);
-		void displayDigitalTime(int, int, int);
+		void clearColumn(int columnToRemove);
+		void displayBCDTime(int theCurrentHour, int theCurrentMinute, int theCurrentSecond);
+		void displayBinaryTime(int theCurrentHour, int theCurrentMinute, int theCurrentSecond);
+		void displayDigitalTime(int theCurrentHour, int theCurrentMinute, int theCurrentSecond);
 		void displayparty();
 
 	private:
 		void upDown();
 		void writeWelcome();
-		void turnColumnBinary(int, int);
+		void turnColumnBinary(int columnToChange, int numToConvertToBinary);
+		void showLEDBCD();
+		void showLEDBinary();
+		void showLEDDigital();
 		int rgbLEDs [3][3];
 };
 	

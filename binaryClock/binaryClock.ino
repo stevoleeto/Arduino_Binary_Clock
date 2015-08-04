@@ -178,17 +178,14 @@ void loop() {
   else{
     updateTime();
     if(bcd){
-      display.showLEDBCD();
       display.BCDTime(currHour, currMinute, currSecond); 
     }
     
     else if(binary){
-      display.showLEDBinary();
       display.binaryTime(currHour, currMinute, currSecond);
     }
     
     else if(digital){
-      display.showLEDDigital();
       display.digitalTime(currHour, currMinute, currSecond);
     }
     
