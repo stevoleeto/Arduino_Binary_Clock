@@ -1,6 +1,6 @@
 ### Welcome to the BitClock, powered by Arduino (Stephen Gilardi, 2015)
 
-BitClock is a simple clock which features three time modes and an additional party mode.
+BitClock is a simple clock which features three time modes to display the current time, and an additional party mode to have fun with.
 
 #### DIFFERENT MODES
 * Default time mode selected is Binary Counting, which uses a single column to represent a decimal digit, in binary, to display the time.
